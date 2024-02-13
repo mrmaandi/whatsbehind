@@ -24,7 +24,7 @@ gwt {
   compiler.strict = true
   compiler.disableCastChecking = true
   //// The next line can be useful to uncomment if you want output that hasn't been obfuscated.
-//  compiler.style = org.docstr.gradle.plugins.gwt.Style.DETAILED
+  compiler.style = org.docstr.gradle.plugins.gwt.Style.DETAILED
 
   sourceLevel = 1.11
 }
@@ -34,8 +34,8 @@ dependencies {
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1"
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1:sources"
   implementation "com.google.jsinterop:jsinterop-annotations:2.0.2:sources"
+  // implementation "com.github.lyze237:gdx-FlexBox:$version:sources"
   implementation project(':core')
-
 }
 
 import org.akhikhl.gretty.AppBeforeIntegrationTestTask
@@ -130,7 +130,7 @@ task dist(dependsOn: [clean, compileGwt]) {
 task addSource {
   doLast {
     sourceSets.main.compileClasspath += files(project(':core').sourceSets.main.allJava.srcDirs)
-    
+
   }
 }
 
