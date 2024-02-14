@@ -3,24 +3,20 @@ package com.gamejam;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.gamejam.textloader.Text;
 import com.gamejam.textloader.TextLoader;
+
+import java.util.Random;
 
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
 public class WhatBehindTheDoorGame extends Game {
 
-    //SpriteBatch batch;
-    BitmapFont font;
     GameState gameState;
     AssetManager assetManager;
     Skin skin;
@@ -29,7 +25,10 @@ public class WhatBehindTheDoorGame extends Game {
     public void create() {
         gameState = new GameState();
         gameState.level = 1;
-        //batch = new SpriteBatch();
+        gameState.playerHealth = 3;
+        gameState.coins = 0;
+        Random random = new Random();
+        gameState.winningOption = random.nextInt(3);
 
         assetManager = new AssetManager();
         assetManager.setLoader(
@@ -44,18 +43,11 @@ public class WhatBehindTheDoorGame extends Game {
         assetManager.finishLoading();
 
         skin = assetManager.get("commodore64/skin/uiskin.json", Skin.class);
-        //font = assetManager.get( "commodore64/raw/commodore-64.fnt", BitmapFont.class);
-
-        // font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        // font.getData().setScale(1f);
 
         setScreen(new StartScreen(this));
     }
 
     public void dispose() {
-        //batch.dispose();
-        //font.dispose();
         skin.dispose();
-        //assetManager.dispose();
     }
 }

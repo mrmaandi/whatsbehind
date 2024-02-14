@@ -23,9 +23,6 @@ public class MainMenuScreen implements Screen {
     public MainMenuScreen(final WhatBehindTheDoorGame game) {
         this.game = game;
 
-        //camera = new OrthographicCamera();
-        //camera.setToOrtho(false, 640, 480);
-
         // Create table
         Table rootTable = new Table();
         rootTable.debugAll();
@@ -40,7 +37,8 @@ public class MainMenuScreen implements Screen {
 
         Window window = new Window("WINDOW", game.skin, "dialog");
         window.debugAll();
-        //window.setMovable(false);
+        window.setResizable(true);
+        window.getTitleLabel().setStyle(game.skin.get("title", Label.LabelStyle.class));
 
         Button button = new TextButton("Text", game.skin);
         window.add(button);

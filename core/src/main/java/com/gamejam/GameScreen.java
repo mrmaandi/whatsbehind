@@ -3,13 +3,18 @@ package com.gamejam;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.*;
 
 /**
  * Main screen for the game.
@@ -17,7 +22,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 public class GameScreen implements Screen {
 
     public static final String DOOR_ASCII =
-        "________\n" +
             "  __  __  \n" +
             " |  ||  | \n" +
             " |  ||  | \n" +
@@ -27,12 +31,11 @@ public class GameScreen implements Screen {
             " |  ||  | \n" +
             " |  ||  | \n" +
             " |  ||  | \n" +
-            " |__||__| \n" +
-            "__________";
+            " |__||__| \n";
     private final WhatBehindTheDoorGame game;
     private final Stage stage;
 
-    Label label2;
+    Label labelLevel;
     Table rootTable;
 
 
@@ -45,10 +48,9 @@ public class GameScreen implements Screen {
     public void show() {
         // Prepare your screen here.
         // Create table
-        rootTable = new Table();
+        rootTable = new Table(game.skin);
 
         rootTable.debugAll();
-        rootTable.setSkin(game.skin);
         rootTable.background("window");
         rootTable.setFillParent(true);
 
@@ -56,37 +58,60 @@ public class GameScreen implements Screen {
 
         // Top section
         rootTable.row().expand().fill();
+        // Left pane
+        Table tableLeft = new Table();
+        tableLeft.row().expandX().fillX().expandY().fillY();
         Window window = new Window("", game.skin, "dialog");
+        //window.debugAll();
         window.setMovable(false);
-        // window.debugAll();
-        window.row();
+        window.getTitleTable().add(new Label("Game", game.skin, "title")).expandX().left();
+        window.row().height(40);
         Label label = new Label("Pick a door", game.skin);
         window.add(label);
         window.row();
         Button option1 = new TextButton(DOOR_ASCII, game.skin);
+        String statsLabel = "Level: " + game.gameState.level + " | " + "Coins: " + game.gameState.coins + " | " + "Health: " + game.gameState.playerHealth;
         option1.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.gameState.level += 1;
-                label2.setText("Level: " + game.gameState.level);
+                String statsLabel = "Level: " + game.gameState.level + " | " + "Coins: " + game.gameState.coins + " | " + "Health: " + game.gameState.playerHealth;
+                labelLevel.setText(statsLabel);
             }
         });
         Button option2 = new TextButton(DOOR_ASCII, game.skin);
         ClickListener clickListener = option2.getClickListener();
         clickListener.clicked(new InputEvent(), 0, 0);
-        Button button3 = new TextButton(DOOR_ASCII, game.skin);
+        Button option3 = new TextButton(DOOR_ASCII, game.skin);
         HorizontalGroup group = new HorizontalGroup();
+        group.space(10);
         group.addActor(option1);
+        option1.addAction(sequence(moveBy(0, 50), parallel(fadeIn(2), moveBy(0, -50, 5, Interpolation.bounceOut))));
         group.addActor(option2);
-        group.addActor(button3);
+        option2.addAction(sequence(moveBy(0, 50), delay(0.5f), parallel(fadeIn(2), moveBy(0, -50, 5, Interpolation.bounceOut))));
+        group.addActor(option3);
+        option3.addAction(sequence(moveBy(0, 50), delay(1), parallel(fadeIn(2), moveBy(0, -50, 5, Interpolation.bounceOut))));
         window.add(group);
+        tableLeft.add(window);
+        // Left pane - Bottom section
+        tableLeft.row().expandX().fillX().bottom();
 
-        rootTable.add(window);
+        labelLevel = new Label(statsLabel, game.skin);
+        labelLevel.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
 
-        // Bottom section
-        rootTable.row().expandX().fillX();
-        label2 = new Label("Level: " + game.gameState.level, game.skin);
-        rootTable.add(label2).expandX().fillX();
+            }
+        });
+        tableLeft.add(labelLevel);
+
+        // Right pane
+        Table tableRight = new Table();
+        Label labelRight = new Label("Shop", game.skin);
+        tableRight.add(labelRight);
+
+        rootTable.add(tableLeft);
+        rootTable.add(tableRight);
 
         stage.addActor(rootTable);
         Gdx.input.setInputProcessor(stage);
