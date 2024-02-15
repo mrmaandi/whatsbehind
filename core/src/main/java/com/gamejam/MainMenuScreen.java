@@ -3,8 +3,6 @@ package com.gamejam;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -47,6 +45,7 @@ public class MainMenuScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         stage.addActor(rootTable);
         stage.addActor(window);
+
         Gdx.input.setInputProcessor(stage);
     }
 
@@ -72,8 +71,8 @@ public class MainMenuScreen implements Screen {
         stage.draw();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            game.setScreen(new GameScreen(game));
-            dispose();
+            game.setScreen(game.gameScreen);
+            // dispose();
         }
     }
 

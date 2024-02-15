@@ -3,7 +3,6 @@ package com.gamejam;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -36,6 +35,10 @@ public class StartScreen implements Screen {
         Label logoLabel = new Label(logo, game.skin);
         rootTable.add(logoLabel);
 
+        rootTable.row().height(200);
+        Label hintLabel = new Label("Press any key to continue", game.skin);
+        rootTable.add(hintLabel);
+
         stage = new Stage(new ScreenViewport());
         stage.addActor(rootTable);
         Gdx.input.setInputProcessor(stage);
@@ -64,7 +67,7 @@ public class StartScreen implements Screen {
         stage.draw();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
-            game.setScreen(new GameScreen(game));
+            game.setScreen(game.gameScreen);
             dispose();
         }
     }

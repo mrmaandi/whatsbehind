@@ -1,6 +1,7 @@
 package com.gamejam;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
@@ -19,13 +20,19 @@ public class WhatBehindTheDoorGame extends Game {
 
     GameState gameState;
     AssetManager assetManager;
+    GameEventManager eventManager;
     Skin skin;
+    Screen startScreen;
+    Screen mainMenuScreen;
+    Screen gameScreen;
 
     @Override
     public void create() {
         gameState = new GameState();
+        eventManager = new GameEventManager();
         gameState.level = 1;
-        gameState.playerHealth = 3;
+        gameState.maxPlayerHealth = 3;
+        gameState.playerHealth = gameState.maxPlayerHealth;
         gameState.coins = 0;
         Random random = new Random();
         gameState.winningOption = random.nextInt(3);
@@ -44,7 +51,11 @@ public class WhatBehindTheDoorGame extends Game {
 
         skin = assetManager.get("commodore64/skin/uiskin.json", Skin.class);
 
-        setScreen(new StartScreen(this));
+        startScreen = new StartScreen(this);
+        mainMenuScreen = new MainMenuScreen(this);
+        gameScreen = new GameScreen(this);
+
+        setScreen(startScreen);
     }
 
     public void dispose() {
