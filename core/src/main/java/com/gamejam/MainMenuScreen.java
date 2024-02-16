@@ -3,103 +3,115 @@ package com.gamejam;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.gamejam.textloader.Text;
 
-/**
- * Screen for the main menu.
- */
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
+
+/** Screen for the main menu. */
 public class MainMenuScreen implements Screen {
 
-    private final WhatBehindTheDoorGame game;
-    //private final OrthographicCamera camera;
+  private final WhatBehindTheDoorGame game;
 
-    private final Stage stage;
+  private final Stage stage;
 
-    public MainMenuScreen(final WhatBehindTheDoorGame game) {
-        this.game = game;
+  Table rootTable;
 
-        // Create table
-        Table rootTable = new Table();
-        rootTable.debugAll();
-        rootTable.setSkin(game.skin);
-        rootTable.background("window");
-        rootTable.setFillParent(true);
-        rootTable.setLayoutEnabled(true);
+  public MainMenuScreen(final WhatBehindTheDoorGame game) {
+    this.game = game;
 
-        // Create UI elements
-        Label nameLabel = new Label("Name:", game.skin);
-        rootTable.add(nameLabel);
+    // Create table
+    rootTable = new Table();
+    // rootTable.debugAll();
+    rootTable.row().height(40).width(300);
+    rootTable.setSkin(game.skin);
+    rootTable.background("window");
+    rootTable.setFillParent(true);
 
-        Window window = new Window("WINDOW", game.skin, "dialog");
-        window.debugAll();
-        window.setResizable(true);
-        window.getTitleLabel().setStyle(game.skin.get("title", Label.LabelStyle.class));
+    setContent();
 
-        Button button = new TextButton("Text", game.skin);
-        window.add(button);
+    // Create stage
+    stage = new Stage(new ScreenViewport());
+    stage.addActor(rootTable);
+  }
 
-        // Create stage
-        stage = new Stage(new ScreenViewport());
-        stage.addActor(rootTable);
-        stage.addActor(window);
+  private void setContent() {
+    // Create UI elements
+    rootTable.row();
+    String logo = game.assetManager.get("logo.txt", Text.class).getString();
+    Label logoLabel = new Label(logo, game.skin);
+    rootTable.add(logoLabel);
 
-        Gdx.input.setInputProcessor(stage);
-    }
-
-    @Override
-    public void show() {
-        // Prepare your screen here.
-    }
-
-    @Override
-    public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
-        ScreenUtils.clear(0, 0, 0, 1);
-
-        //camera.update();
-        //game.batch.setProjectionMatrix(camera.combined);
-
-        //game.batch.begin();
-        //game.font.draw(game.batch, "What's Behind The Door?", 100, 150);
-        //game.font.draw(game.batch, "Main menu", 100, 100);
-        //game.batch.end();
-
-        stage.act(delta);
-        stage.draw();
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+    rootTable.row().padTop(200).height(40).width(300);
+    TextButton buttonGame = new TextButton("To game", game.skin);
+    buttonGame.addListener(
+        new ClickListener() {
+          @Override
+          public void clicked(InputEvent event, float x, float y) {
             game.setScreen(game.gameScreen);
-            // dispose();
-        }
-    }
+          }
+        });
+    rootTable.add(buttonGame);
 
-    @Override
-    public void resize(int width, int height) {
-        // Resize your screen here. The parameters represent the new window size.
-        stage.getViewport().update(width, height, true);
-    }
+    rootTable.row().padTop(20).height(40).width(300);
+    TextButton buttonCredits = new TextButton("Credits", game.skin);
+    buttonCredits.addListener(
+        new ClickListener() {
+          @Override
+          public void clicked(InputEvent event, float x, float y) {
+            game.setScreen(game.creditsScreen);
+          }
+        });
+    rootTable.add(buttonCredits);
+  }
 
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
-    }
+  @Override
+  public void show() {
+    // Prepare your screen here.
+    Gdx.input.setInputProcessor(stage);
+    stage.getRoot().getColor().a = 0;
+    stage.getRoot().addAction(fadeIn(0.5f));
+  }
 
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
+  @Override
+  public void render(float delta) {
+    // Draw your screen here. "delta" is the time since last render in seconds.
+    // ScreenUtils.clear(0, 0, 0, 1);
 
-    @Override
-    public void hide() {
-        // This method is called when another screen replaces this one.
-    }
+    stage.act(delta);
+    stage.draw();
+  }
 
-    @Override
-    public void dispose() {
-        // Destroy screen's assets here.
-        stage.dispose();
-    }
+  @Override
+  public void resize(int width, int height) {
+    // Resize your screen here. The parameters represent the new window size.
+    stage.getViewport().update(width, height, true);
+  }
+
+  @Override
+  public void pause() {
+    // Invoked when your application is paused.
+  }
+
+  @Override
+  public void resume() {
+    // Invoked when your application is resumed after pause.
+  }
+
+  @Override
+  public void hide() {
+    // This method is called when another screen replaces this one.
+  }
+
+  @Override
+  public void dispose() {
+    // Destroy screen's assets here.
+    stage.dispose();
+  }
 }

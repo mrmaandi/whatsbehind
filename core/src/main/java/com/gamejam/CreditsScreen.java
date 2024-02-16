@@ -1,71 +1,79 @@
 package com.gamejam;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.gamejam.textloader.Text;
 
-import static com.badlogic.gdx.scenes.scene2d.actions.Actions.*;
-
-/** First screen of the application. Displayed after the application is created. */
-public class StartScreen implements Screen {
+/** Screen for the credits. */
+public class CreditsScreen implements Screen {
 
   private final WhatBehindTheDoorGame game;
-  private final Stage stage;
 
-  public StartScreen(final WhatBehindTheDoorGame game) {
+  private final Stage stage;
+  private final String credits;
+  Table rootTable;
+
+  public CreditsScreen(final WhatBehindTheDoorGame game) {
     this.game = game;
 
-    String logo = game.assetManager.get("logo.txt", Text.class).getString();
-
     // Create table
-    Table rootTable = new Table();
+    rootTable = new Table();
     // rootTable.debugAll();
+    rootTable.row().height(40).width(300);
     rootTable.setSkin(game.skin);
     rootTable.background("window");
     rootTable.setFillParent(true);
-    rootTable.row();
 
-    // Create UI elements
-    Label logoLabel = new Label(logo, game.skin);
-    rootTable.add(logoLabel);
+    credits = game.assetManager.get("credits.txt", Text.class).getString();
 
-    rootTable.row().padTop(300);
-    Label hintLabel = new Label("Press any key or click the screen to continue", game.skin);
-    hintLabel.addAction(
-        forever(
-            sequence(
-                moveBy(0, 10, 1, Interpolation.smooth), moveBy(0, -10, 1, Interpolation.smooth))));
-    rootTable.add(hintLabel);
+    setContent();
 
+    // Create stage
     stage = new Stage(new ScreenViewport());
     stage.addActor(rootTable);
-    Gdx.input.setInputProcessor(stage);
+  }
+
+  private void setContent() {
+    // Create UI elements
+    rootTable.row().expand().fill();
+    Label label = new Label(credits, game.skin);
+    label.setWrap(true);
+    label.setAlignment(Align.center);
+    rootTable.add(label);
+
+    rootTable.row().padTop(20);
+
+    TextButton buttonCredits = new TextButton("Back", game.skin);
+    buttonCredits.addListener(
+        new ClickListener() {
+          @Override
+          public void clicked(InputEvent event, float x, float y) {
+            game.setScreen(game.mainMenuScreen);
+          }
+        });
+    rootTable.add(buttonCredits);
   }
 
   @Override
   public void show() {
     // Prepare your screen here.
+    Gdx.input.setInputProcessor(stage);
   }
 
   @Override
   public void render(float delta) {
     // Draw your screen here. "delta" is the time since last render in seconds.
-    // ScreenUtils.clear(0, 0, 0, 1);
+    ScreenUtils.clear(0, 0, 0, 1);
 
     stage.act(delta);
     stage.draw();
-
-    if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY) || Gdx.input.isTouched()) {
-      game.setScreen(game.gameScreen);
-      dispose();
-    }
   }
 
   @Override

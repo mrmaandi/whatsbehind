@@ -1,0 +1,6 @@
+This game was made in Java with Libgdx.
+
+Scene2d skin Commodore64 by Raymond "Raeleus" Buckley
+
+
+Made by Villem Maandi
