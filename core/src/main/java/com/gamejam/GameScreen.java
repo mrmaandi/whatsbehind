@@ -2,6 +2,7 @@ package com.gamejam;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -10,16 +11,31 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import text.formic.Stringf;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.Random;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.*;
 
 /** Main screen for the game. */
 public class GameScreen implements Screen {
 
-  private static final String HOST_FACE =
+  private static final String HOST_FACE_HAPPY =
+      "    .-\"\"\"\"\"\"-.\n"
+          + "  .'          '.\n"
+          + " /   O      O   \\\n"
+          + ":                :\n"
+          + "|                |\n"
+          + ": ',          ,' :\n"
+          + " \\  '-......-'  /\n"
+          + "  '.          .'\n"
+          + "    '-......-'";
+  private static final String HOST_FACE_ANGRY =
       "    .-\"\"\"\"\"\"-.\n"
           + "  .'  \\\\  //  '.\n"
           + " /   O      O   \\\n"
@@ -29,6 +45,27 @@ public class GameScreen implements Screen {
           + " \\  .-\"`  `\"-.  /\n"
           + "  '.          .'\n"
           + "    '-......-'";
+  private static final String HOST_FACE_GOOFY =
+      " , ; ,   .-'\"\"\"'-.   , ; ,\n"
+          + " \\\\|/  .'         '.  \\|//\n"
+          + "  \\-;-/   ()   ()   \\-;-/\n"
+          + "  // ;               ; \\\\\n"
+          + " //__; :.         .; ;__\\\\\n"
+          + "`-----\\'.'-.....-'.'/-----'\n"
+          + "       '.'.-.-,_.'.'\n"
+          + "         '(  (..-'\n"
+          + "           '-'";
+  private static final String HOST_FACE_DEAD =
+      "    .-\"\"\"\"\"\"-.\n"
+          + "  .'          '.\n"
+          + " /   X      X   \\\n"
+          + ":           `    :\n"
+          + "|                |\n"
+          + ":    .------.    :\n"
+          + " \\  '        '  /\n"
+          + "  '.          .'\n"
+          + "    '-......-'";
+
   private static final String WALL_LABEL_TEXT =
       "_|___|__\n"
           + "___|___|\n"
@@ -59,12 +96,33 @@ public class GameScreen implements Screen {
 
   Window gameWindow;
   Window shopWindow;
+  Table switchableTable;
 
   Table tableGameBoard;
+  ProgressBar healthBar;
+
+  Label hostFaceLabel;
+
+  ArrayList<Sound> typeSounds;
+  Sound clickSound;
+  Sound hitHurtSound;
+  Sound coinSound;
+  Sound explosionSound;
 
   public GameScreen(final WhatBehindTheDoorGame game) {
     this.game = game;
-    stage = new Stage(new ScreenViewport());
+    stage = new Stage(new FitViewport(1280, 720));
+    typeSounds = new ArrayList<>();
+
+    // Load sounds
+    Sound typeSound = game.assetManager.get("sound/type1.wav", Sound.class);
+    typeSounds.add(typeSound);
+    Sound typeSound2 = game.assetManager.get("sound/type2.wav", Sound.class);
+    typeSounds.add(typeSound2);
+    clickSound = game.assetManager.get("sound/click.wav", Sound.class);
+    hitHurtSound = game.assetManager.get("sound/hitHurt.wav", Sound.class);
+    coinSound = game.assetManager.get("sound/coin.wav", Sound.class);
+    explosionSound = game.assetManager.get("sound/explosion.wav", Sound.class);
 
     stage.addListener(
         new ChangeListener() {
@@ -82,21 +140,24 @@ public class GameScreen implements Screen {
     rootTable.setFillParent(true);
 
     // Create UI elements
-    Table tableHost = createHostTable();
-    rootTable.row().expand().fill();
+    Table tableHost = createHostSideArea();
+    rootTable.row().expandY().fillY();
     rootTable.add(tableHost);
 
+    switchableTable = new Table(game.skin);
+    switchableTable.row().expand().fill();
     gameWindow = createWindowPickDoorsContent();
     shopWindow = createWindowShopContent();
 
     stage.addActor(rootTable);
   }
 
-  private Table createGameTable() {
+  private Table createGameSideArea() {
     tableGameBoard = new Table();
     tableGameBoard.row().expand().fill();
 
-    tableGameBoard.add(gameWindow);
+    switchableTable.add(gameWindow);
+    tableGameBoard.add(switchableTable);
 
     // Left pane - Bottom section
     tableGameBoard.row().height(TEXT_BUTTON_HEIGHT);
@@ -119,17 +180,109 @@ public class GameScreen implements Screen {
     window.setMovable(false);
     window.getTitleTable().add(new Label("Shop", game.skin, "title")).expandX().left();
     window.row();
-    window.add(new Label("now u in shop", game.skin));
-
+    window.add(new Label("Purchase items:\n", game.skin));
     window.row().height(TEXT_BUTTON_HEIGHT);
+
+    // Med pack
+    HorizontalGroup group = new HorizontalGroup();
+    group.space(10);
+    TextButton medPackButton = new TextButton("Buy", game.skin);
+    medPackButton.addListener(
+        new ClickListener() {
+          @Override
+          public void clicked(InputEvent event, float x, float y) {
+            int itemCost = 1;
+            if (game.gameState.coins < itemCost) {
+              return;
+            }
+            if (Objects.equals(game.gameState.playerHealth, game.gameState.maxPlayerHealth)) {
+              return;
+            }
+
+            game.gameState.coins = game.gameState.coins - itemCost;
+            game.gameState.playerHealth++;
+          }
+        });
+    Label medPackItemLabel = new Label("MEDPACK (Cost: 1)", game.skin);
+    group.addActor(medPackItemLabel);
+    group.addActor(medPackButton);
+    window.add(group);
+    window.row();
+    Label medPackInfoLabel = new Label("Heals the player by 1 life.", game.skin, "error");
+    window.add(medPackInfoLabel);
+
+    // Bomb
+    HorizontalGroup bombItemGroup = new HorizontalGroup();
+    bombItemGroup.space(10);
+    TextButton bombItemButton = new TextButton("Buy", game.skin);
+    bombItemButton.addListener(
+        new ClickListener() {
+          @Override
+          public void clicked(InputEvent event, float x, float y) {
+            int itemCost = 2;
+            if (game.gameState.coins < itemCost) {
+              return;
+            }
+
+            game.gameState.coins = game.gameState.coins - itemCost;
+            game.gameState.hitHost();
+            hitHurtSound.play();
+            hostFaceLabel.setText(HOST_FACE_ANGRY);
+            game.gameState.setHostCurrentSpeak(Arrays.asList("That was painful!"));
+            healthBar.setValue(game.gameState.hostCurrentHealth);
+            if (game.gameState.hostCurrentHealth == 0) {
+              System.out.println("PLAYER WINS!");
+              hostFaceLabel.setText(HOST_FACE_DEAD);
+              game.gameState.setHostCurrentSpeak(
+                  Arrays.asList("Congratulations - You won! Thanks for playing!"));
+              switchableTable.clear();
+
+              switchableTable.row().expand().fill();
+
+              Window playAgainWindow = new Window("", game.skin, "dialog");
+              TextButton restartButton = new TextButton("Play again", game.skin);
+              restartButton.addListener(
+                  new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                      System.out.println("Restart game clicked");
+                      switchableTable.clear();
+                      switchableTable.row().expand().fill();
+                      switchableTable.add(gameWindow);
+                      showDoorsWithAnimation();
+                      game.gameState.resetState();
+                      hostFaceLabel.setText(HOST_FACE_HAPPY);
+                      healthBar.setValue(game.gameState.hostMaxHealth);
+                    }
+                  });
+              playAgainWindow.add(restartButton).height(TEXT_BUTTON_HEIGHT);
+              switchableTable.add(playAgainWindow);
+            }
+            game.eventManager.sendStateUpdate();
+          }
+        });
+    window.row().height(TEXT_BUTTON_HEIGHT).padTop(20);
+    Label bombItemLabel = new Label("BOMB (Cost: 2)", game.skin);
+    bombItemGroup.addActor(bombItemLabel);
+    bombItemGroup.addActor(bombItemButton);
+    window.add(bombItemGroup);
+    window.row();
+    Label bombItemInfoLabel = new Label("Deals random damage to host.", game.skin, "error");
+    window.add(bombItemInfoLabel);
+
+    window.row().height(TEXT_BUTTON_HEIGHT).padTop(100);
     TextButton nextButton = new TextButton("Continue", game.skin);
     nextButton.addListener(
         new ClickListener() {
           @Override
           public void clicked(InputEvent event, float x, float y) {
-            tableGameBoard.removeActor(shopWindow);
-            tableGameBoard.add(gameWindow);
+            switchableTable.clear();
+            switchableTable.row().expand().fill();
+            switchableTable.add(gameWindow);
+            hostFaceLabel.setText(HOST_FACE_HAPPY);
+            game.gameState.setHostCurrentSpeak(Arrays.asList("Lets play again. Choose one door"));
             game.gameState.loadNextLevel();
+            showDoorsWithAnimation();
           }
         });
     window.add(nextButton);
@@ -140,20 +293,7 @@ public class GameScreen implements Screen {
     Window window = new Window("", game.skin, "dialog");
     window.setMovable(false);
     window.getTitleTable().add(new Label("Game board", game.skin, "title")).expandX().left();
-    ChangeListener gameWindowListener =
-        new ChangeListener() {
-          @Override
-          public void changed(ChangeEvent event, Actor actor) {
-            if (game.gameState.showShop) {
-              System.out.println("SHOW SHOP");
-              // set to shop window
-              tableGameBoard.removeActor(gameWindow);
-              tableGameBoard.add(shopWindow);
-            }
-          }
-        };
-    window.addListener(gameWindowListener);
-    game.eventManager.addChangeListener(gameWindowListener);
+
     window.row().height(200);
     Label label = new Label("Pick a door", game.skin);
     window.add(label);
@@ -174,19 +314,20 @@ public class GameScreen implements Screen {
     group.space(10);
     group.addActor(option1);
     option1.addAction(
-        sequence(moveBy(0, 30), parallel(fadeIn(2), moveBy(0, -30, 2, Interpolation.bounceOut))));
+        sequence(
+            moveBy(0, 30), parallel(fadeIn(0.5f), moveBy(0, -30, 1, Interpolation.bounceOut))));
     group.addActor(option2);
     option2.addAction(
         sequence(
             moveBy(0, 30),
             delay(0.2f),
-            parallel(fadeIn(2), moveBy(0, -30, 2, Interpolation.bounceOut))));
+            parallel(fadeIn(0.5f), moveBy(0, -30, 1, Interpolation.bounceOut))));
     group.addActor(option3);
     option3.addAction(
         sequence(
             moveBy(0, 30),
             delay(0.4f),
-            parallel(fadeIn(2), moveBy(0, -30, 2, Interpolation.bounceOut))));
+            parallel(fadeIn(0.5f), moveBy(0, -30, 1, Interpolation.bounceOut))));
     group.addActor(new Label(WALL_LABEL_TEXT, game.skin));
     window.add(group);
 
@@ -222,11 +363,10 @@ public class GameScreen implements Screen {
               game.gameState.playerChoiceConfirmed = true;
               game.gameState.setHostCurrentSpeak(
                   Arrays.asList(
-                      "You clicked and confirmed selection!",
-                      "Now I will reveal a door, which has no prize",
-                      String.format(
-                          "Door %s has no reward.\n\nYou may now choose whether you want to STAY or SWITCH.\n\nMake your choice carefully.",
-                          game.gameState.revealedDoor + 1)));
+                      Stringf.format(
+                          "I will reveal that door %s has no reward.",
+                          game.gameState.revealedDoor + 1),
+                      "You may now choose to STAY or SWITCH."));
               game.eventManager.sendStateUpdate();
               return;
             }
@@ -236,13 +376,35 @@ public class GameScreen implements Screen {
               System.out.println("> second confirm");
               if (game.gameState.winningOption == game.gameState.playerChoice) {
                 game.gameState.setHostCurrentSpeak(
-                    Arrays.asList(
-                        "Congratulations! You picked winning option and thereby earn 1 coin!"));
+                    Arrays.asList("You picked the door with reward!\n\nYou earn 1 coin!"));
+                coinSound.play();
                 game.gameState.coins++;
               } else {
-                game.gameState.setHostCurrentSpeak(Arrays.asList("I WIN! You lose life!!"));
+                int healAmount = game.gameState.healHost();
+                game.gameState.setHostCurrentSpeak(
+                    Arrays.asList(
+                        Stringf.format(
+                            "Your door does not have any prize!\n\nYou lose one life.\n\nI also heal for %s.",
+                            healAmount)));
+                hitHurtSound.play();
+                healthBar.setValue(game.gameState.hostCurrentHealth);
                 game.gameState.playerHealth--;
               }
+
+              // fade out door without reward
+              int revealedDoor = game.gameState.revealedDoor;
+              int winningOption = game.gameState.winningOption;
+              TextButton button;
+              if (revealedDoor != 0 && winningOption != 0) {
+                button = option1;
+              } else if (revealedDoor != 1 && winningOption != 1) {
+                button = option2;
+              } else {
+                button = option3;
+              }
+
+              button.addAction(alpha(0.2f, 0.5f));
+
               game.gameState.readyForShop = true;
               game.eventManager.sendStateUpdate();
               return;
@@ -253,17 +415,43 @@ public class GameScreen implements Screen {
 
             if (game.gameState.playerHealth == 0) {
               System.out.println("PLAYER DIED!");
-              game.gameState.setHostCurrentSpeak(Arrays.asList("You died!!! Game over"));
+              game.gameState.setHostCurrentSpeak(
+                  Arrays.asList("You died - Game over! Thanks for playing!"));
+              hostFaceLabel.setText(HOST_FACE_GOOFY);
+              explosionSound.play();
+              switchableTable.clear();
+              switchableTable.row().expand().fill();
+
+              Window playAgainWindow = new Window("", game.skin, "dialog");
+              TextButton restartButton = new TextButton("Play again", game.skin);
+              restartButton.addListener(
+                  new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                      System.out.println("Restart game clicked");
+                      switchableTable.clear();
+                      switchableTable.row().expand().fill();
+                      switchableTable.add(gameWindow);
+                      showDoorsWithAnimation();
+                      game.gameState.resetState();
+                      hostFaceLabel.setText(HOST_FACE_HAPPY);
+                      healthBar.setValue(game.gameState.hostMaxHealth);
+                    }
+                  });
+              playAgainWindow.add(restartButton).height(TEXT_BUTTON_HEIGHT);
+              switchableTable.add(playAgainWindow);
               return;
             }
 
-            // Load next level
+            // Confirm - Go to shop
             game.gameState.showShop = true;
 
-            /* game.gameState.loadNextLevel();
-            option1.addAction(alpha(1f, 1, Interpolation.swingIn));
-            option2.addAction(alpha(1f, 1, Interpolation.swingIn));
-            option3.addAction(alpha(1f, 1, Interpolation.swingIn));*/
+            switchableTable.clear();
+            switchableTable.row().expand().fill();
+            switchableTable.add(shopWindow);
+            game.gameState.setHostCurrentSpeak(
+                Arrays.asList(
+                    "Welcome to my shop! You can purchase anything if you have the coins.\n\nItems will be instantly used upon purchase."));
 
             game.eventManager.sendStateUpdate();
           }
@@ -285,6 +473,12 @@ public class GameScreen implements Screen {
     return window;
   }
 
+  private void showDoorsWithAnimation() {
+    option1.addAction(alpha(1f, 1, Interpolation.swingIn));
+    option2.addAction(alpha(1f, 1, Interpolation.swingIn));
+    option3.addAction(alpha(1f, 1, Interpolation.swingIn));
+  }
+
   private String getDoorText(String doorName, boolean isSelected) {
     String doorText;
     if (isSelected) {
@@ -292,19 +486,43 @@ public class GameScreen implements Screen {
     } else {
       doorText = doorName;
     }
-    return String.format(DOOR_TEXT_BASE, doorText);
+    return Stringf.format(DOOR_TEXT_BASE, doorText);
   }
 
-  private Table createHostTable() {
+  private Table createHostSideArea() {
     Table tableRight = new Table();
-    tableRight.row().expand().fill();
+    tableRight.row().expandY().fillY();
     // tableRight.debugAll();
     Window hostWindow = new Window("", game.skin, "dialog");
     // hostWindow.debugAll();
     hostWindow.getTitleTable().add(new Label("Host", game.skin, "title")).expandX().left();
     hostWindow.setMovable(false);
-    Label hostFaceLabel = new Label(HOST_FACE, game.skin);
+    hostFaceLabel = new Label(HOST_FACE_HAPPY, game.skin);
     hostWindow.add(hostFaceLabel);
+
+    hostWindow.row().bottom().padTop(20);
+    Label hostHealthLabel = new Label("", game.skin);
+    ChangeListener hostHealthLabelChangeListener =
+        new ChangeListener() {
+          @Override
+          public void changed(ChangeEvent event, Actor actor) {
+            hostHealthLabel.setText(
+                Stringf.format(
+                    "Health (%s/%s)",
+                    game.gameState.hostCurrentHealth, game.gameState.hostMaxHealth));
+          }
+        };
+    hostHealthLabel.addListener(hostHealthLabelChangeListener);
+    game.eventManager.addChangeListener(hostHealthLabelChangeListener);
+
+    hostWindow.add(hostHealthLabel);
+
+    hostWindow.row().pad(10).expandX().fillX();
+    healthBar = new ProgressBar(0, 100, 1, false, game.skin);
+    healthBar.setValue(game.gameState.hostCurrentHealth);
+    healthBar.setAnimateDuration(1f);
+    healthBar.setAnimateInterpolation(Interpolation.elastic);
+    hostWindow.add(healthBar);
     hostWindow.row().expand().fill().pad(30, 5, 30, 5);
     hostLabel = new Label("", game.skin);
     hostLabel.setWrap(true);
@@ -318,7 +536,7 @@ public class GameScreen implements Screen {
     hostLabel.addListener(listener);
     game.eventManager.addChangeListener(listener);
     hostWindow.add(hostLabel);
-    hostWindow.row().height(TEXT_BUTTON_HEIGHT);
+    hostWindow.row().height(TEXT_BUTTON_HEIGHT).padBottom(10);
     nextButton = new TextButton("Next", game.skin);
     nextButton.addListener(
         new ClickListener() {
@@ -326,8 +544,8 @@ public class GameScreen implements Screen {
           public void clicked(InputEvent event, float x, float y) {
             System.out.println("Click next");
             if (tableLeft == null) { // First next click!
-              tableLeft = createGameTable();
-              rootTable.add(tableLeft);
+              tableLeft = createGameSideArea();
+              rootTable.add(tableLeft).expandX().fillX();
               tableLeft.addAction(sequence(fadeOut(0), fadeIn(1)));
             }
 
@@ -376,16 +594,12 @@ public class GameScreen implements Screen {
   }
 
   private String getStatsLabel() {
-    return "Round: "
-        + game.gameState.level
-        + "   "
-        + "Coins: "
-        + game.gameState.coins
-        + "   "
-        + "Health: "
-        + game.gameState.playerHealth
-        + "/"
-        + game.gameState.maxPlayerHealth;
+    return Stringf.format(
+        "Health: %s/%s  Coins: %s  Round: %s",
+        game.gameState.playerHealth,
+        game.gameState.maxPlayerHealth,
+        game.gameState.coins,
+        game.gameState.level);
   }
 
   @Override
@@ -409,7 +623,7 @@ public class GameScreen implements Screen {
                     && !game.gameState.revealedDoorAnimationPlayed;
             if (isHostRevealedDoor) {
               System.out.println("is host revel door");
-              button.addAction(alpha(0.2f, 0.5f, Interpolation.swingIn));
+              button.addAction(alpha(0.2f, 0.5f));
               game.gameState.revealedDoorAnimationPlayed = true;
             }
 
@@ -425,16 +639,19 @@ public class GameScreen implements Screen {
 
   private void revealBadDoor() {
     System.out.println("reveal bad door");
-    int goatDoor;
+    ArrayList<Integer> goatDoors = new ArrayList<>();
     if (game.gameState.winningOption != 0 && game.gameState.playerChoice != 0) {
-      goatDoor = 0;
-    } else if (game.gameState.winningOption != 1 && game.gameState.playerChoice != 1) {
-      goatDoor = 1;
-    } else {
-      goatDoor = 2;
+      goatDoors.add(0);
+    }
+    if (game.gameState.winningOption != 1 && game.gameState.playerChoice != 1) {
+      goatDoors.add(1);
+    }
+    if (game.gameState.winningOption != 2 && game.gameState.playerChoice != 2) {
+      goatDoors.add(2);
     }
 
-    game.gameState.revealedDoor = goatDoor;
+    int max = goatDoors.size();
+    game.gameState.revealedDoor = goatDoors.get(new Random().nextInt(max));
     game.eventManager.sendStateUpdate();
   }
 
@@ -447,6 +664,7 @@ public class GameScreen implements Screen {
           return;
         }
         game.gameState.playerChoice = doorIndex;
+        clickSound.play();
         game.eventManager.sendStateUpdate();
       }
     };
@@ -467,7 +685,7 @@ public class GameScreen implements Screen {
       return;
     }
     game.gameState.hostTextTimer += delta;
-    if (game.gameState.hostTextTimer < 0.05f) {
+    if (game.gameState.hostTextTimer < 0.07f) {
       return;
     }
     game.gameState.currentCharacterPosition++;
@@ -475,6 +693,9 @@ public class GameScreen implements Screen {
         currentText.substring(0, game.gameState.currentCharacterPosition);
     game.gameState.hostTextTimer = 0f;
     game.eventManager.sendStateUpdate();
+    if (game.gameState.currentCharacterPosition % 2 == 0) {
+      typeSounds.get(new Random().nextInt(typeSounds.size())).play();
+    }
   }
 
   @Override

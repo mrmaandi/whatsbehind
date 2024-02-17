@@ -1,4 +1,3 @@
-
 buildscript {
   repositories {
     mavenCentral()
@@ -12,7 +11,8 @@ apply plugin: "war"
 apply plugin: "org.gretty"
 
 gwt {
-  gwtVersion = "$gwtFrameworkVersion" // Should match the version used for building the GWT backend. See gradle.properties.
+  gwtVersion = "$gwtFrameworkVersion"
+  // Should match the version used for building the GWT backend. See gradle.properties.
   maxHeapSize = '1G' // Default 256m is not enough for the GWT compiler. GWT is HUNGRY.
   minHeapSize = '1G'
 
@@ -34,7 +34,7 @@ dependencies {
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1"
   implementation "com.github.tommyettinger:gdx-backend-gwt:1.1210.1:sources"
   implementation "com.google.jsinterop:jsinterop-annotations:2.0.2:sources"
-  // implementation "com.github.lyze237:gdx-FlexBox:$version:sources"
+  implementation 'com.github.tommyettinger:formic:0.1.5:sources'
   implementation project(':core')
 }
 
@@ -47,7 +47,7 @@ gretty.resourceBase = "${project.layout.buildDirectory.asFile.get().absolutePath
 gretty.contextPath = "/"
 gretty.portPropertiesFileName = "TEMP_PORTS.properties"
 
-task startHttpServer (dependsOn: [draftCompileGwt]) {
+task startHttpServer(dependsOn: [draftCompileGwt]) {
   doFirst {
     copy {
       from "webapp"
@@ -97,7 +97,7 @@ task dist(dependsOn: [clean, compileGwt]) {
 
     file(outputPath).mkdirs()
     copy {
-      from("build/gwt/out"){
+      from("build/gwt/out") {
         exclude '**/*.symbolMap' // Not used by a dist, and these can be large.
       }
       into outputPath
@@ -108,7 +108,7 @@ task dist(dependsOn: [clean, compileGwt]) {
         exclude 'refresh.png' // We don't need this button; this saves some bytes.
       }
       into outputPath
-      }
+    }
     copy {
       from("webapp") {
         // These next two lines take the index.html page and remove the superdev refresh button.
@@ -119,7 +119,7 @@ task dist(dependsOn: [clean, compileGwt]) {
         // either remove or comment out only the "filter" line above this.
       }
       into outputPath
-      }
+    }
     copy {
       from "war"
       into outputPath
@@ -134,7 +134,7 @@ task addSource {
   }
 }
 
-task distZip(type: Zip, dependsOn: dist){
+task distZip(type: Zip, dependsOn: dist) {
   //// This uses the output of the dist task, which removes the superdev button from index.html .
   from(outputPath)
   archiveBaseName.set("${appName}-dist")
@@ -148,6 +148,6 @@ tasks.checkGwt.dependsOn(addSource)
 
 java.sourceCompatibility = JavaVersion.VERSION_11
 java.targetCompatibility = JavaVersion.VERSION_11
-sourceSets.main.java.srcDirs = [ "src/main/java/" ]
+sourceSets.main.java.srcDirs = ["src/main/java/"]
 
 eclipse.project.name = appName + "-html"

@@ -13,19 +13,22 @@ public class GameState {
   Integer maxPlayerHealth = null;
   Integer coins = null;
   Boolean playerChoiceConfirmed = null;
-  // Boolean playerChoiceSecondConfirmed = null;
   Integer revealedDoor = null;
   Boolean revealedDoorAnimationPlayed = null;
   Boolean readyForShop = null;
   Boolean showHostNextButton = null;
   Boolean showShop = null;
+  Integer hostCurrentHealth = null;
+  Integer hostMaxHealth = null;
+
+  Integer itemsMedPack = null;
 
   // Host
   List<String> hostIntro =
       Arrays.asList(
           "Hello player and welcome to my game show!\n\nI'll walk you through how to play.",
           "In front of you are 3 doors.\n\nBut only one holds a reward.",
-          "Remember:\n\nhigh risk = high reward");
+          "Pick one which you think will have the reward and press continue.");
 
   List<String> hostCurrentSpeak = hostIntro;
   int hostTextPosition = 0;
@@ -39,7 +42,8 @@ public class GameState {
     hostTextTimer = 0f;
     currentCharacterPosition = 0;
     hostCurrentSpeak = texts;
-    showHostNextButton = true;
+    boolean showNext = texts.size() > 1;
+    showHostNextButton = showNext;
   }
 
   public void loadNextLevel() {
@@ -52,49 +56,48 @@ public class GameState {
     winningOption = generateWinningOption();
     playerChoice = null;
     showShop = false;
-    setHostCurrentSpeak(Arrays.asList("Lets play again. Choose one door"));
     System.out.println("winning option: " + winningOption);
+  }
+
+  public void resetState() {
+    level = 1;
+    maxPlayerHealth = 3;
+    playerHealth = maxPlayerHealth;
+    playerChoiceConfirmed = false;
+    playerChoice = null;
+    coins = 0;
+    readyForShop = false;
+    winningOption = generateWinningOption();
+    showHostNextButton = true;
+    revealedDoor = null;
+    revealedDoorAnimationPlayed = false;
+    showShop = false;
+    itemsMedPack = 0;
+    hostMaxHealth = 100;
+    hostCurrentHealth = hostMaxHealth;
+
+    setHostCurrentSpeak(hostIntro);
+  }
+
+  public int hitHost() {
+    int randomInt = new Random().nextInt(40) + 10;
+
+    int hitAmount = Math.min(randomInt, hostCurrentHealth);
+    hostCurrentHealth = hostCurrentHealth - hitAmount;
+    return hitAmount;
+  }
+
+  public int healHost() {
+    int maxAllowedHeal = hostMaxHealth - hostCurrentHealth;
+    int randomInt = new Random().nextInt(20) + 10;
+
+    int healAmount = Math.min(randomInt, maxAllowedHeal);
+    hostCurrentHealth = hostCurrentHealth + healAmount;
+    return healAmount;
   }
 
   public int generateWinningOption() {
     Random random = new Random();
     return random.nextInt(3);
-  }
-
-  @Override
-  public String toString() {
-    return "GameState{"
-        + "playerChoice="
-        + playerChoice
-        + ", winningOption="
-        + winningOption
-        + ", level="
-        + level
-        + ", playerHealth="
-        + playerHealth
-        + ", maxPlayerHealth="
-        + maxPlayerHealth
-        + ", coins="
-        + coins
-        + ", playerChoiceConfirmed="
-        + playerChoiceConfirmed
-        + ", revealedDoor="
-        + revealedDoor
-        + ", readyForShop="
-        + readyForShop
-        + ", hostIntro="
-        + hostIntro
-        + ", hostCurrentSpeak="
-        + hostCurrentSpeak
-        + ", hostTextPosition="
-        + hostTextPosition
-        + ", hostTextTimer="
-        + hostTextTimer
-        + ", currentCharacterPosition="
-        + currentCharacterPosition
-        + ", currentHostText='"
-        + currentHostText
-        + '\''
-        + '}';
   }
 }

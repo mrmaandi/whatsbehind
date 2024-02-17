@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.gamejam.textloader.Text;
 
@@ -37,7 +38,7 @@ public class MainMenuScreen implements Screen {
     setContent();
 
     // Create stage
-    stage = new Stage(new ScreenViewport());
+    stage = new Stage(new FitViewport(1280, 720));
     stage.addActor(rootTable);
   }
 

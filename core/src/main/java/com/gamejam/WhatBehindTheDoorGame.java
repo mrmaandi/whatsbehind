@@ -5,7 +5,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
+import com.badlogic.gdx.assets.loaders.SoundLoader;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.gamejam.textloader.Text;
@@ -27,17 +29,7 @@ public class WhatBehindTheDoorGame extends Game {
   public void create() {
     gameState = new GameState();
     eventManager = new GameEventManager();
-    gameState.level = 1;
-    gameState.maxPlayerHealth = 3;
-    gameState.playerHealth = gameState.maxPlayerHealth;
-    gameState.playerChoiceConfirmed = false;
-    // gameState.playerChoiceSecondConfirmed = false;
-    gameState.coins = 0;
-    gameState.readyForShop = false;
-    gameState.winningOption = gameState.generateWinningOption();
-    gameState.showHostNextButton = true;
-    gameState.revealedDoorAnimationPlayed = false;
-    gameState.showShop = false;
+    gameState.resetState();
 
     assetManager = new AssetManager();
     assetManager.setLoader(Text.class, new TextLoader(new InternalFileHandleResolver()));
@@ -49,6 +41,13 @@ public class WhatBehindTheDoorGame extends Game {
         Skin.class,
         new SkinLoader.SkinParameter("commodore64/skin/uiskin.atlas"));
     assetManager.load("credits.txt", Text.class, new TextLoader.TextParameter());
+    assetManager.load("sound/type1.wav", Sound.class, new SoundLoader.SoundParameter());
+    assetManager.load("sound/type2.wav", Sound.class, new SoundLoader.SoundParameter());
+    assetManager.load("sound/click.wav", Sound.class, new SoundLoader.SoundParameter());
+    assetManager.load("sound/hitHurt.wav", Sound.class, new SoundLoader.SoundParameter());
+    assetManager.load("sound/coin.wav", Sound.class, new SoundLoader.SoundParameter());
+    assetManager.load("sound/explosion.wav", Sound.class, new SoundLoader.SoundParameter());
+
     assetManager.finishLoading();
 
     skin = assetManager.get("commodore64/skin/uiskin.json", Skin.class);

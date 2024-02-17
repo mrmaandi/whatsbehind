@@ -2,5 +2,8 @@ This game was made in Java with Libgdx.
 
 Scene2d skin Commodore64 by Raymond "Raeleus" Buckley
 
+Sounds generated using jsfxr (sfxr.me)
+
+
 
 Made by Villem Maandi

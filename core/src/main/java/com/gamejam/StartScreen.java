@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.gamejam.textloader.Text;
 
@@ -36,7 +37,7 @@ public class StartScreen implements Screen {
     Label logoLabel = new Label(logo, game.skin);
     rootTable.add(logoLabel);
 
-    rootTable.row().padTop(300);
+    rootTable.row().padTop(200);
     Label hintLabel = new Label("Press any key or click the screen to continue", game.skin);
     hintLabel.addAction(
         forever(
@@ -44,7 +45,7 @@ public class StartScreen implements Screen {
                 moveBy(0, 10, 1, Interpolation.smooth), moveBy(0, -10, 1, Interpolation.smooth))));
     rootTable.add(hintLabel);
 
-    stage = new Stage(new ScreenViewport());
+    stage = new Stage(new FitViewport(1280, 720));
     stage.addActor(rootTable);
     Gdx.input.setInputProcessor(stage);
   }
